@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_web_api_log,access_web_api_log,model_web_api_log,,1,1,1,1
+access_visualdte_api,access_visualdte_api,model_visualdte_api,,1,1,1,1

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="edi_visualdte" model="account.edi.format">
+            <field name="name">UBL Visualdte (Colombia)</field>
+            <field name="code">ubl_visualdte</field>
+        </record>
+
+    </data>
+</odoo>

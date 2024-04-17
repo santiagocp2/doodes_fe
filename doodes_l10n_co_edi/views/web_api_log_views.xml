@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<odoo>
+    <!-- Web API Log -->
+    <record id="web_api_log_view_form" model="ir.ui.view">
+        <field name="name">web.api.log.view.form</field>
+        <field name="model">web.api.log</field>
+        <field name="arch" type="xml">
+            <form string="Web API Log" edit="0" create="0">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="waiting,error,success" />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="res_model" />
+                            <field name="res_id" />
+                            <field name="date_request" />
+                            <field name="function" />
+                        </group>
+                        <group>
+                            <field name="user_id" />
+                            <field name="date_done" />
+                        </group>
+                    </group>
+                    <group>
+                        <field name="values" />
+                    </group>
+                    <group>
+                        <field name="response" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="web_api_log_view_tree" model="ir.ui.view">
+        <field name="name">web.api.log.view.tree</field>
+        <field name="model">web.api.log</field>
+        <field name="arch" type="xml">
+            <tree string="Web API Log" create="0" edit="0" delete="0">
+                <field name="date_request" />
+                <field name="date_done" />
+                <field name="user_id" />
+                <field name="function" />
+                <field name="state" optional="show" widget="badge" decoration-info="state=='waiting'" decoration-success="state=='success'" decoration-danger="state=='error'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_web_api_log" model="ir.actions.act_window">
+        <field name="name">Web API Log</field>
+        <field name="res_model">web.api.log</field>
+        <field name="view_id" ref="web_api_log_view_tree" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Crear un nuevo log
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_integration" name="Integraciones" parent="base.menu_custom" sequence="4" />
+    <menuitem id="menu_web_api_log" name="Web API Log" action="action_web_api_log" parent="doodes_l10n_co_edi.menu_integration" sequence="10" />
+
+</odoo>

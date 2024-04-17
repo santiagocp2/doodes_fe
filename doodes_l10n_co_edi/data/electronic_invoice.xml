@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="new_electronic_invoice_body" inherit_id="l10n_co_edi.electronic_invoice_body" name="Ajustes XML Facturación Electronica Colombiana">
+        </template>
+    </data>
+</odoo>
