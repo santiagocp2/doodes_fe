@@ -3,10 +3,6 @@
 from odoo import fields, api, models, _
 
 from datetime import timedelta
-import base64
-import logging
-
-_logger = logging.getLogger(__name__)
 
 
 class AccountEdiFormat(models.Model):
@@ -85,87 +81,3 @@ class AccountEdiFormat(models.Model):
                     _("You should set a volume on product: %s when using IBUA taxes.", line.product_id.name))
 
         return edi_result
-
-    def _get_move_applicability(self, move):
-        self.ensure_one()
-        res = super(AccountEdiFormat, self)._get_move_applicability(move)
-        if self.code != 'ubl_visualdte':
-            return res
-
-        # Determine on which invoices the EDI must be generated.
-        co_edi_needed = move.country_code == 'CO' and (
-            move.move_type in ('in_invoice', 'in_refund')
-            and bool(self.env.ref('l10n_co_edi.electronic_invoice_vendor_document_xml', raise_if_not_found=False))
-        ) or (
-            move.move_type in ('out_invoice', 'out_refund')
-        )
-        if co_edi_needed:
-            return {
-                'post': self._l10n_co_edi_post_invoice_visualdte,
-                'cancel': self._l10n_co_edi_cancel_invoice,
-            }
-
-    def _send_document_to_visualdte(self, api, invoice):
-        '''Sends the xml to visualdte.
-        '''
-        xml_filename = self._l10n_co_edi_generate_electronic_invoice_filename(
-            invoice)
-
-        xml = self._l10n_co_edi_generate_xml(invoice)
-        xml_base64 = base64.b64encode(xml)
-        attachment = self.env['ir.attachment'].create({
-            'name': xml_filename,
-            'res_id': invoice.id,
-            'res_model': invoice._name,
-            'type': 'binary',
-            'raw': xml,
-            'mimetype': 'application/xml',
-            'description': _('Colombian invoice UBL XML generated for the %s document.', invoice.name),
-        })
-
-        json_data = {
-            "nombrearchivo": invoice.company_id.fe_code + invoice.company_id.fe_code + xml_filename,
-            "base64": xml_base64.decode("ascii")
-        }
-        response = {}
-        data = {
-            'id': invoice.id,
-            'json_data': json_data
-        }
-        result = api._post_request_send_xml(data)
-        if result:
-            response['success'] = True
-            
-            invoice.l10n_co_edi_cufe_cude_ref = result.get('cufe', False)
-            data_zip = result.get('zip', False)
-            msg = 'Integración con VisualDTE exitosa. Mensaje de VisualDTE:<br/>%s' % result['response']
-            
-            # == Create the attachment ==
-            response['attachment'] = self.env['ir.attachment'].create({
-                'name': xml_filename.replace('.xml', '.zip'),
-                'res_id': invoice.id,
-                'res_model': invoice._name,
-                'type': 'binary',
-                'datas': data_zip,
-                'mimetype': 'application/xml',
-                'description': _('Colombia UBL - adjuntos generados para la factura %s.', invoice.name),
-            })
-
-            # == Chatter ==
-            invoice.with_context(no_new_invoice=True).message_post(body=msg, attachments=response['attachment'])
-        else:
-            response['attachment'] = attachment
-
-            msg = 'Error en la integración con VisualDTE'
-            # == Chatter ==
-            invoice.with_context(no_new_invoice=True).message_post(body=msg)
-
-        return response
-
-    def _l10n_co_post_invoice_visualdte(self, invoice):
-        response = self._send_document_to_visualdte(self.env['visualdte.api'].search(
-            [('active', '=', True)], limit=1), invoice)
-        return response
-
-    def _l10n_co_edi_post_invoice_visualdte(self, invoice):
-        return {invoice: self._l10n_co_post_invoice_visualdte(invoice)}
